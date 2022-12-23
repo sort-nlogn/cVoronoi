@@ -5,7 +5,7 @@
 #include <graphics.h>
 
 #define max_polygon_size 15
-#define sites_cnt 2500
+#define sites_cnt 100
 #define eps 0.00000001
 
 #define width 640
@@ -90,7 +90,7 @@ point2d on_circle(int cnt, int idx, double offset_x, double offset_y){
     return pt;
 }
 
-void construct_voronoi(polygon *cells, point2d sites[]){
+void construct_voronoi(polygon *cells, point2d sites[], bool first_call){
     double step = (2.0 * M_PI) / sites_cnt;
     for(int i = 0; i < sites_cnt; i++){
         cells[i].size = 4;
@@ -101,8 +101,10 @@ void construct_voronoi(polygon *cells, point2d sites[]){
         cells[i].points[3].x = 0.0;  cells[i].points[3].y = 1.0;
 
         // sites[i] = on_circle(sites_cnt, i, 0.5, 0.5);
-        sites[i].x = r();
-        sites[i].y = r();
+        if(first_call){
+            sites[i].x = r();
+            sites[i].y = r();
+        }
 
     }
 
@@ -116,6 +118,16 @@ void construct_voronoi(polygon *cells, point2d sites[]){
 
 }
 
+void Lloyd_relaxation(polygon *cells, point2d sites[]){
+    for(int i = 0; i < sites_cnt; i++){
+        point2d centroid = {0.0, 0.0};
+        for(int j = 0; j < cells[i].size; j++){
+            centroid.x += cells[i].points[j].x; centroid.y += cells[i].points[j].y; 
+        }
+        centroid.x /= cells[i].size; centroid.y /= cells[i].size; 
+        sites[i] = centroid;
+    }
+}
 
 
 int main(int argc, char *argv[]){
@@ -124,11 +136,17 @@ int main(int argc, char *argv[]){
     polygon *Voronoi_cells = (polygon *)malloc(sizeof(polygon) * sites_cnt);
     int colors[sites_cnt]; for (int i = 0; i < sites_cnt; i++){colors[i] = RGB((int)(r() * 255), (int)(r() * 255), (int)(r() * 255));}
 
-    construct_voronoi(Voronoi_cells, sites); 
+    
+
+    construct_voronoi(Voronoi_cells, sites, true); 
  
     int win = initwindow(width, height, "Voronoi");
-
+    bool x = false;
     while(1){
+        if(!x){
+            x = true;
+            int a; scanf("%d", &a);
+        }
         for(int i = 0; i < sites_cnt; i++){
             int *shape = (int*)malloc((Voronoi_cells[i].size + 1) * 2 * sizeof(int));
             for(int j = 0; j < Voronoi_cells[i].size; j++){
@@ -146,10 +164,16 @@ int main(int argc, char *argv[]){
             fillpoly(Voronoi_cells[i].size + 1, shape);
             free(shape);
         }
-            swapbuffers();
-            clearviewport();
-            Sleep(1);
+        setcolor(RGB(255, 255, 255));
+        for(int i = 0; i < sites_cnt; i++){
+            circle((int)(sites[i].x * width), (int)(sites[i].y * height), 1);
         }
+        swapbuffers();
+        clearviewport();
+        Sleep(1);
+        Lloyd_relaxation(Voronoi_cells, sites);
+        construct_voronoi(Voronoi_cells, sites, false);
+    }
 
     free(Voronoi_cells);
     return 0;
