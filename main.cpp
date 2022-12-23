@@ -143,10 +143,6 @@ int main(int argc, char *argv[]){
     int win = initwindow(width, height, "Voronoi");
     bool x = false;
     while(1){
-        if(!x){
-            x = true;
-            int a; scanf("%d", &a);
-        }
         for(int i = 0; i < sites_cnt; i++){
             int *shape = (int*)malloc((Voronoi_cells[i].size + 1) * 2 * sizeof(int));
             for(int j = 0; j < Voronoi_cells[i].size; j++){
